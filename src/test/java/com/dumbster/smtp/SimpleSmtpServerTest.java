@@ -2,7 +2,7 @@
  * Dumbster - a dummy SMTP server
  * Copyright 2016 Joachim Nicolay
  * Copyright 2004 Jason Paul Kitchen
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,17 +17,20 @@
  */
 package com.dumbster.smtp;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.util.*;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
@@ -82,7 +85,7 @@ public class SimpleSmtpServerTest {
 
 	@Test
 	public void testSendMessageWithCR() throws MessagingException {
-		String bodyWithCR = "\n\nKeep these pesky carriage returns\n\n";
+		String bodyWithCR = "\n\nKeep these pesky carriage returns";
 		sendMessage(server.getPort(), "sender@hereagain.com", "CRTest", bodyWithCR, "receivingagain@there.com");
 
 		List<SmtpMessage> emails = server.getReceivedEmails();
