@@ -42,158 +42,158 @@ import static org.junit.Assert.assertTrue;
 
 public class SimpleSmtpServerTest {
 
-	private SimpleSmtpServer server;
+    private SimpleSmtpServer server;
 
-	@Before
-	public void setUp() throws Exception {
-		server = SimpleSmtpServer.start(SimpleSmtpServer.AUTO_SMTP_PORT);
-	}
+    @Before
+    public void setUp() throws Exception {
+        server = SimpleSmtpServer.start(SimpleSmtpServer.AUTO_SMTP_PORT);
+    }
 
-	@After
-	public void tearDown() throws Exception {
-		server.stop();
-	}
+    @After
+    public void tearDown() throws Exception {
+        server.stop();
+    }
 
-	@Test
-	public void testSend() throws MessagingException {
-		sendMessage(server.getPort(), "sender@here.com", "Test", "Test Body", "receiver@there.com");
+    @Test
+    public void testSend() throws MessagingException {
+        sendMessage(server.getPort(), "sender@here.com", "Test", "Test Body", "receiver@there.com");
 
-		List<SmtpMessage> emails = server.getReceivedEmails();
-		assertThat(emails, hasSize(1));
-		SmtpMessage email = emails.get(0);
-		assertThat(email.getHeaderValue("Subject"), is("Test"));
-		assertThat(email.getBody(), is("Test Body"));
-		assertThat(email.getHeaderNames(), hasItem("Date"));
-		assertThat(email.getHeaderNames(), hasItem("From"));
-		assertThat(email.getHeaderNames(), hasItem("To"));
-		assertThat(email.getHeaderNames(), hasItem("Subject"));
-		assertThat(email.getHeaderValues("To"), contains("receiver@there.com"));
-		assertThat(email.getHeaderValue("To"), is("receiver@there.com"));
-	}
+        List<SmtpMessage> emails = server.getReceivedEmails();
+        assertThat(emails, hasSize(1));
+        SmtpMessage email = emails.get(0);
+        assertThat(email.getHeaderValue("Subject"), is("Test"));
+        assertThat(email.getBody(), is("Test Body"));
+        assertThat(email.getHeaderNames(), hasItem("Date"));
+        assertThat(email.getHeaderNames(), hasItem("From"));
+        assertThat(email.getHeaderNames(), hasItem("To"));
+        assertThat(email.getHeaderNames(), hasItem("Subject"));
+        assertThat(email.getHeaderValues("To"), contains("receiver@there.com"));
+        assertThat(email.getHeaderValue("To"), is("receiver@there.com"));
+    }
 
-	@Test
-	public void testSendAndReset() throws MessagingException {
-		sendMessage(server.getPort(), "sender@here.com", "Test", "Test Body", "receiver@there.com");
-		assertThat(server.getReceivedEmails(), hasSize(1));
+    @Test
+    public void testSendAndReset() throws MessagingException {
+        sendMessage(server.getPort(), "sender@here.com", "Test", "Test Body", "receiver@there.com");
+        assertThat(server.getReceivedEmails(), hasSize(1));
 
-		server.reset();
-		assertThat(server.getReceivedEmails(), hasSize(0));
+        server.reset();
+        assertThat(server.getReceivedEmails(), hasSize(0));
 
-		sendMessage(server.getPort(), "sender@here.com", "Test", "Test Body", "receiver@there.com");
-		assertThat(server.getReceivedEmails(), hasSize(1));
-	}
+        sendMessage(server.getPort(), "sender@here.com", "Test", "Test Body", "receiver@there.com");
+        assertThat(server.getReceivedEmails(), hasSize(1));
+    }
 
-	@Test
-	public void testSendMessageWithCR() throws MessagingException {
-		String bodyWithCR = "\n\nKeep these pesky carriage returns";
-		sendMessage(server.getPort(), "sender@hereagain.com", "CRTest", bodyWithCR, "receivingagain@there.com");
+    @Test
+    public void testSendMessageWithCR() throws MessagingException {
+        String bodyWithCR = "\n\nKeep these pesky carriage returns";
+        sendMessage(server.getPort(), "sender@hereagain.com", "CRTest", bodyWithCR, "receivingagain@there.com");
 
-		List<SmtpMessage> emails = server.getReceivedEmails();
-		assertThat(emails, hasSize(1));
-		SmtpMessage email = emails.get(0);
-		assertEquals(bodyWithCR, email.getBody());
-	}
+        List<SmtpMessage> emails = server.getReceivedEmails();
+        assertThat(emails, hasSize(1));
+        SmtpMessage email = emails.get(0);
+        assertEquals(bodyWithCR, email.getBody());
+    }
 
-	@Test
-	public void testSendTwoMessagesSameConnection() throws MessagingException {
-		MimeMessage[] mimeMessages = new MimeMessage[2];
-		Properties mailProps = getMailProperties(server.getPort());
-		Session session = Session.getInstance(mailProps, null);
+    @Test
+    public void testSendTwoMessagesSameConnection() throws MessagingException {
+        MimeMessage[] mimeMessages = new MimeMessage[2];
+        Properties mailProps = getMailProperties(server.getPort());
+        Session session = Session.getInstance(mailProps, null);
 
-		mimeMessages[0] = createMessage(session, "sender@whatever.com", "receiver@home.com", "Doodle1", "Bug1");
-		mimeMessages[1] = createMessage(session, "sender@whatever.com", "receiver@home.com", "Doodle2", "Bug2");
+        mimeMessages[0] = createMessage(session, "sender@whatever.com", "receiver@home.com", "Doodle1", "Bug1");
+        mimeMessages[1] = createMessage(session, "sender@whatever.com", "receiver@home.com", "Doodle2", "Bug2");
 
-		Transport transport = session.getTransport("smtp");
-		transport.connect("localhost", server.getPort(), null, null);
+        Transport transport = session.getTransport("smtp");
+        transport.connect("localhost", server.getPort(), null, null);
 
-		for (int i = 0; i < mimeMessages.length; i++) {
-			MimeMessage mimeMessage = mimeMessages[i];
-			transport.sendMessage(mimeMessage, mimeMessage.getAllRecipients());
-		}
+        for (int i = 0; i < mimeMessages.length; i++) {
+            MimeMessage mimeMessage = mimeMessages[i];
+            transport.sendMessage(mimeMessage, mimeMessage.getAllRecipients());
+        }
 
-		transport.close();
+        transport.close();
 
-		assertThat(server.getReceivedEmails(), hasSize(2));
-	}
+        assertThat(server.getReceivedEmails(), hasSize(2));
+    }
 
-	@Test
-	public void testSendTwoMsgsWithLogin() throws Exception {
-		String serverHost = "localhost";
-		String from = "sender@here.com";
-		String to = "receiver@there.com";
-		String subject = "Test";
-		String body = "Test Body";
+    @Test
+    public void testSendTwoMsgsWithLogin() throws Exception {
+        String serverHost = "localhost";
+        String from = "sender@here.com";
+        String to = "receiver@there.com";
+        String subject = "Test";
+        String body = "Test Body";
 
-		Properties props = System.getProperties();
+        Properties props = System.getProperties();
 
-		if (serverHost != null) {
-			props.setProperty("mail.smtp.host", serverHost);
-		}
+        if (serverHost != null) {
+            props.setProperty("mail.smtp.host", serverHost);
+        }
 
-		Session session = Session.getDefaultInstance(props, null);
-		Message msg = new MimeMessage(session);
+        Session session = Session.getDefaultInstance(props, null);
+        Message msg = new MimeMessage(session);
 
-		if (from != null) {
-			msg.setFrom(new InternetAddress(from));
-		} else {
-			msg.setFrom();
-		}
+        if (from != null) {
+            msg.setFrom(new InternetAddress(from));
+        } else {
+            msg.setFrom();
+        }
 
-		InternetAddress.parse(to, false);
-		msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-		msg.setSubject(subject);
+        InternetAddress.parse(to, false);
+        msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
+        msg.setSubject(subject);
 
-		msg.setText(body);
-		msg.setHeader("X-Mailer", "musala");
-		msg.setSentDate(new Date());
-		msg.saveChanges();
+        msg.setText(body);
+        msg.setHeader("X-Mailer", "musala");
+        msg.setSentDate(new Date());
+        msg.saveChanges();
 
-		Transport transport = null;
+        Transport transport = null;
 
-		try {
-			transport = session.getTransport("smtp");
-			transport.connect(serverHost, server.getPort(), "ddd", "ddd");
-			transport.sendMessage(msg, InternetAddress.parse(to, false));
-			transport.sendMessage(msg, InternetAddress.parse("dimiter.bakardjiev@musala.com", false));
-		} finally {
-			if (transport != null) {
-				transport.close();
-			}
-		}
+        try {
+            transport = session.getTransport("smtp");
+            transport.connect(serverHost, server.getPort(), "ddd", "ddd");
+            transport.sendMessage(msg, InternetAddress.parse(to, false));
+            transport.sendMessage(msg, InternetAddress.parse("dimiter.bakardjiev@musala.com", false));
+        } finally {
+            if (transport != null) {
+                transport.close();
+            }
+        }
 
-		List<SmtpMessage> emails = this.server.getReceivedEmails();
-		assertThat(emails, hasSize(2));
-		SmtpMessage email = emails.get(0);
-		assertTrue(email.getHeaderValue("Subject").equals("Test"));
-		assertTrue(email.getBody().equals("Test Body"));
-	}
+        List<SmtpMessage> emails = this.server.getReceivedEmails();
+        assertThat(emails, hasSize(2));
+        SmtpMessage email = emails.get(0);
+        assertTrue(email.getHeaderValue("Subject").equals("Test"));
+        assertTrue(email.getBody().equals("Test Body"));
+    }
 
-	private Properties getMailProperties(int port) {
-		Properties mailProps = new Properties();
-		mailProps.setProperty("mail.smtp.host", "localhost");
-		mailProps.setProperty("mail.smtp.port", "" + port);
-		mailProps.setProperty("mail.smtp.sendpartial", "true");
-		return mailProps;
-	}
+    private Properties getMailProperties(int port) {
+        Properties mailProps = new Properties();
+        mailProps.setProperty("mail.smtp.host", "localhost");
+        mailProps.setProperty("mail.smtp.port", "" + port);
+        mailProps.setProperty("mail.smtp.sendpartial", "true");
+        return mailProps;
+    }
 
 
-	private void sendMessage(int port, String from, String subject, String body, String to) throws MessagingException {
-		Properties mailProps = getMailProperties(port);
-		Session session = Session.getInstance(mailProps, null);
-		//session.setDebug(true);
+    private void sendMessage(int port, String from, String subject, String body, String to) throws MessagingException {
+        Properties mailProps = getMailProperties(port);
+        Session session = Session.getInstance(mailProps, null);
+        //session.setDebug(true);
 
-		MimeMessage msg = createMessage(session, from, to, subject, body);
-		Transport.send(msg);
-	}
+        MimeMessage msg = createMessage(session, from, to, subject, body);
+        Transport.send(msg);
+    }
 
-	private MimeMessage createMessage(
-			Session session, String from, String to, String subject, String body) throws MessagingException {
-		MimeMessage msg = new MimeMessage(session);
-		msg.setFrom(new InternetAddress(from));
-		msg.setSubject(subject);
-		msg.setSentDate(new Date());
-		msg.setText(body);
-		msg.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
-		return msg;
-	}
+    private MimeMessage createMessage(
+            Session session, String from, String to, String subject, String body) throws MessagingException {
+        MimeMessage msg = new MimeMessage(session);
+        msg.setFrom(new InternetAddress(from));
+        msg.setSubject(subject);
+        msg.setSentDate(new Date());
+        msg.setText(body);
+        msg.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
+        return msg;
+    }
 }
